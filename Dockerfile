@@ -1,17 +1,12 @@
+# Stage 1
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
-WORKDIR /app
-
-# copy csproj and restore as distinct layers
-COPY *.sln .
-COPY weathersamplesdotnetpipeline/*.csproj ./weathersamplesdotnetpipeline/
+WORKDIR /build
+COPY . .
 RUN dotnet restore
+RUN dotnet publish -c Release -o /app
 
-# copy everything else and build app
-COPY weathersamplesdotnetpipeline/. ./weathersamplesdotnetpipeline/
-WORKDIR /app/weathersamplesdotnetpipeline
-RUN dotnet publish -c Release -o out
-
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS runtime
+# Stage 2
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS final
 WORKDIR /app
-COPY --from=build /app/weathersamplesdotnetpipeline/out ./
+COPY --from=build /app .
 ENTRYPOINT ["dotnet", "weathersamplesdotnetpipeline.dll"]
